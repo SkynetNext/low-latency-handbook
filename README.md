@@ -21,6 +21,7 @@ This table ranks operations from lowest to highest latency. Cycle counts are bas
 | **Aeron IPC** | **0.25μs** | **~750** | Software | [Frameworks](docs/frameworks.md) |
 | **RDMA (High-end NIC)** | < 1μs | < 3K | Network | [Networking](docs/networking.md) |
 | **Context Switch** | ~0.67μs | ~2K | System | [CPU & Memory](docs/cpu_memory.md) |
+| **Mutex (Contended)** | **> 0.33μs** | **> 1K** | Sync | [CPU & Memory](docs/cpu_memory.md) |
 | **C++ Exception** | **1.7-3.3μs** | **5K-10K** | Software | [CPU & Memory](docs/cpu_memory.md) |
 | **UDP (Loopback)** | 5-10μs | 15K-30K | Network | [Networking](docs/networking.md) |
 | **NVMe SSD Read** | **~20μs** | **~60K** | Storage | [Storage](docs/storage.md) |
