@@ -13,7 +13,9 @@ This table ranks operations from lowest to highest latency. Cycle counts are bas
 | **Register Operation** | < 0.33ns | < 1 | CPU | [CPU & Memory](docs/cpu_memory.md) |
 | **L1 Cache Hit** | ~1ns | ~3 | Cache | [CPU & Memory](docs/cpu_memory.md) |
 | **L2 Cache Hit** | ~4ns | ~12 | Cache | [CPU & Memory](docs/cpu_memory.md) |
+| **Atomic (Uncontended)** | **~12ns** | **~36** | Sync | [CPU & Memory](docs/cpu_memory.md) |
 | **L3 Cache Hit** | ~12.7ns | ~38 | Cache | [CPU & Memory](docs/cpu_memory.md) |
+| **Mutex (Uncontended)** | **~25ns** | **~75** | Sync | [CPU & Memory](docs/cpu_memory.md) |
 | **Disruptor (Min)** | **29ns** | **~87** | Software | [Frameworks](docs/frameworks.md) |
 | **Main Memory Access** | ~65ns | ~195 | Memory | [CPU & Memory](docs/cpu_memory.md) |
 | **Aeron IPC** | **0.25μs** | **~750** | Software | [Frameworks](docs/frameworks.md) |
@@ -42,6 +44,21 @@ This table ranks operations from lowest to highest latency. Cycle counts are bas
 
 - **Frequency**: 3,000,000,000 Hz
 - **1 Clock Cycle**: 1 / 3,000,000,000 seconds = **0.333 nanoseconds**
+
+---
+
+## 💡 Notes & Priority
+
+### Data Source Priority
+We prioritize data based on the reliability and age of the source:
+**Arch Manuals > Peer-reviewed Benchmarks > Engineering Blogs > Vendor Whitepapers**
+
+### Terminology
+*   **AZ (Availability Zone)**: Isolated locations within data center regions. Cross-AZ latency is significantly higher than intra-AZ.
+*   **Contention**: Multiple threads/cores competing for the same resource (cache line, mutex), leading to performance degradation.
+
+### Environment Variance
+Actual latency varies based on hardware configuration, OS tuning, network load, and message size.
 
 ---
 

@@ -20,22 +20,28 @@ Sorted by latency (ascending):
 | **Int/FP/Vector Multiply** | **1-7** | **0.33-2.3ns** | CPU | Slower than addition |
 | **L1 Cache Read** | **4** | **~1.3ns** | Cache | Private core cache |
 | **━━━ 10-100 Cycles ━━━** | | | | |
-| **Branch Prediction Miss** | **10-20** | **3.3-6.7ns** | Branch | Pipeline flush required |
-| **Floating Point Divide** | **10-40** | **3.3-13ns** | CPU | Significantly slower than mult |
-| **128-bit Vector Divide** | **10-70** | **3.3-23ns** | CPU | SIMD division costs |
 | **L2 Cache Read** | **10-12** | **3.3-4ns** | Cache | Private core cache |
-| **Integer Divide** | **15-40** | **5-13ns** | CPU | Slower than FP in some cases |
+| **Branch Prediction Miss** | **10-20** | **3.3-6.7ns** | Branch | Pipeline flush required |
 | **C Function Call (Direct)** | **15-30** | **5-10ns** | Function | Non-virtual, optimizable |
+| **Atomic Inc/Dec** (Uncontended) | **20-50** | **7-17ns** | Sync | `lock xadd` without contention |
+| **CAS Operation** (Uncontended) | **20-50** | **7-17ns** | Sync | `lock cmpxchg` |
 | **C Function Call (Indirect)** | **20-50** | **6.7-17ns** | Function | Via function pointer |
+| **Floating Point Divide** | **10-40** | **3.3-13ns** | CPU | Significantly slower than mult |
+| **Integer Divide** | **15-40** | **5-13ns** | CPU | Slower than FP in some cases |
 | **C++ Virtual Call** | **30-60** | **10-20ns** | Function | vtable lookup overhead |
 | **L3 Cache Read** | **30-70** | **10-23ns** | Cache | Shared, variable latency |
+| **128-bit Vector Divide** | **10-70** | **3.3-23ns** | CPU | SIMD division costs |
+| **Mutex Lock/Unlock** (Uncontended) | **50-100** | **17-33ns** | Sync | User-space fast-path (futex) |
 | **━━━ 100-1000 Cycles ━━━** | | | | |
 | **Main Memory Read** (Local) | **100-150** | **33-50ns** | Memory | DDR4 random access |
+| **Atomic (Contended)** | **100-300** | **33-100ns** | Sync | Same socket, cache line bouncing |
 | **NUMA: Remote L3 Read** | **100-300** | **33-100ns** | Memory | Cross-socket L3 access |
+| **Atomic (Cross-Socket)** | **300-800** | **100-267ns** | Sync | NUMA node/Socket bouncing |
 | **Malloc/Free Pair** | **200-500** | **67-167ns** | Memory | Small object allocation |
 | **NUMA: Remote Memory Read** | **300-500** | **100-167ns** | Memory | Cross-socket main memory |
 | **━━━ 1000-10000 Cycles ━━━** | | | | |
 | **Syscall Overhead** | **1,000-1,500** | **0.33-0.5μs** | System | User-to-kernel transition |
+| **Mutex Lock/Unlock** (Contended) | **> 1,000** | **> 333ns** | Sync | Triggers syscall & context switch |
 | **Context Switch (Direct)** | **~2,000** | **~0.67μs** | System | Context saving only |
 | **C++ Exception (Throw/Catch)** | **5,000-10,000** | **1.7-3.3μs** | C++ | Avoid in hot paths |
 | **━━━ > 10000 Cycles ━━━** | | | | |
