@@ -19,11 +19,12 @@ This table ranks operations from lowest to highest latency. Cycle counts are bas
 | **Disruptor (Min)** | **29ns** | **~87** | Software | [Frameworks](docs/frameworks.md) |
 | **Main Memory Access** | ~65ns | ~195 | Memory | [CPU & Memory](docs/cpu_memory.md) |
 | **Aeron IPC** | **0.25μs** | **~750** | Software | [Frameworks](docs/frameworks.md) |
-| **RDMA (High-end NIC)** | < 1μs | < 3K | Network | [Networking](docs/networking.md) |
+| **RDMA (InfiniBand/RoCE)** | **< 0.6μs** | **< 1.8K** | Network | [Networking](docs/networking.md) |
 | **Context Switch** | ~0.67μs | ~2K | System | [CPU & Memory](docs/cpu_memory.md) |
 | **Mutex (Contended)** | **> 0.33μs** | **> 1K** | Sync | [CPU & Memory](docs/cpu_memory.md) |
 | **C++ Exception** | **1.7-3.3μs** | **5K-10K** | Software | [CPU & Memory](docs/cpu_memory.md) |
 | **UDP (Loopback)** | 5-10μs | 15K-30K | Network | [Networking](docs/networking.md) |
+| **Aeron UDP** | **~10μs** | **~30K** | Software | [Frameworks](docs/frameworks.md) |
 | **NVMe SSD Read** | **~20μs** | **~60K** | Storage | [Storage](docs/storage.md) |
 | **TCP (Loopback)** | 10-20μs | 30K-60K | Network | [Networking](docs/networking.md) |
 | **TCP/IP (Same DC)** | 100-200μs | 300K-600K | Network | [Networking](docs/networking.md) |
@@ -65,7 +66,7 @@ Actual latency varies based on hardware configuration, OS tuning, network load, 
 
 ## 🤝 Contributing
 
-Data is sourced from LMAX, Martin Thompson, Samsung, and other reputable reports. Pull Requests for updates or new data points are welcome.
+Data is sourced from LMAX, Man Group, Martin Thompson, NVIDIA, Intel, Samsung, and other reputable reports. Pull Requests for updates or new data points are welcome.
 
 **Last Updated**: 2025-12-30  
 **Maintainers**: Exchange-CPP Team

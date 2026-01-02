@@ -22,9 +22,19 @@ Internal latency overhead of high-performance messaging and concurrency framewor
 
 ## Aeron Messaging
 
-**Source**: [Man Group - High Performance Execution on Aeron](https://www.man.com/special-fx-execution-system-on-aeron)
+**Source**: [Man Group: Special FX Execution System on Aeron](https://www.man.com/technology/special-fx-execution-system-on-aeron) (November 2020)
+
+Benchmark methodology: JMH (Java Microbenchmark Harness) to minimize measurement overhead.
 
 | Transport | Scenario | Latency | Cycles @ 3GHz | Notes |
 |:----------|:---------|:--------|:--------------|:------|
-| **Aeron IPC** | Round Trip (RTT) | **~0.25μs** | **~750** | Shared memory IPC |
-| **Aeron UDP (Loopback)** | Round Trip (RTT) | **~10μs** | **~30K** | Optimized UDP stack |
+| **Aeron IPC** | Round Trip (RTT, 100 bytes) | **0.25μs** | **~750** | Shared memory IPC, same box |
+| **Aeron UDP** | Round Trip (RTT) | **~10μs** | **~30K** | Reliable UDP protocol over network |
+| **Tibco** | Round Trip (RTT) | **~200μs** | **~600K** | Alternative reliable UDP solution |
+| **TCP-based Messaging** | Round Trip (RTT) | **≥10ms** | **≥30M** | gRPC/HTTP2, KryoNet, etc. |
+
+**Key Findings from Man Group**:
+- Aeron IPC (0.25μs) is **faster than ConcurrentLinkedQueue** (0.3μs) between threads in the same process
+- Aeron maintains low latency up to **99.999% percentile** under ping-pong workloads
+- No noticeable latency increase under heavy batch load (unlike gRPC/HTTP2 and KryoNet)
+- Production deployment (2019): IPC latency reduced by **at least an order of magnitude** at every percentile
