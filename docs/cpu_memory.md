@@ -72,3 +72,52 @@ Sorted by latency (ascending):
 *   **L3 Structure**: 2MB slices, hashed addressing to improve throughput.
 *   **Memory Channels**: 4 channels per socket.
 *   **QPI Bus**: 8.0 GT/s, supports prefetch forwarding.
+
+---
+
+## Branch Prediction
+
+Modern CPUs use deep pipelines (10-20+ stages) to maximize instruction throughput. A branch misprediction forces a complete pipeline flush, discarding all speculatively executed instructions.
+
+### Misprediction Penalty by Architecture
+
+**Sources**: 
+- [Agner Fog's Microarchitecture Manual](https://www.agner.org/optimize/microarchitecture.pdf)
+- [Intel 64 and IA-32 Architectures Optimization Reference Manual](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html)
+- [Chips and Cheese](https://chipsandcheese.com/)
+
+| CPU Architecture | Pipeline Depth | Misprediction Penalty | Notes |
+|:-----------------|:---------------|:----------------------|:------|
+| **Intel Haswell/Broadwell** | 14 stages | **16-20 cycles** | Agner Fog measured |
+| **Intel Skylake** | 14-16 stages | **14-20 cycles** | 16.5 avg (μop cache hit), 19-20 (miss) |
+| **Intel Alder Lake P-cores** | 12 stages | **~12-15 cycles** | Golden Cove |
+| **Intel Alder Lake E-cores** | 20 stages | **~20 cycles** | Gracemont |
+| **Intel Lion Cove (2024)** | 10 stages | **< 14 cycles** | Reduced pipeline depth |
+| **AMD Zen 3/4** | ~19 stages | **~15-20 cycles** | Two-level branch predictor |
+
+> **Note**: Actual penalty varies from **10 to 100+ cycles** depending on out-of-order execution state and whether the misprediction triggers cache misses.
+
+### Why Misprediction Is Expensive
+
+1. **Pipeline Flush**: All in-flight instructions on the wrong path must be discarded
+2. **Wasted Work**: Deeper pipelines = more speculative instructions wasted
+3. **Frontend Stall**: CPU must wait for correct-path instructions to refill the pipeline
+4. **Cascading Effects**: Misprediction during cache miss can compound to 100+ cycles
+
+### Optimization Techniques
+
+| Technique | Example | Benefit |
+|:----------|:--------|:--------|
+| **Branchless code** | `x = (a > b) * a + (a <= b) * b` | Eliminates branch entirely |
+| **CMOV instruction** | `cmovg` conditional move | No pipeline flush |
+| **likely/unlikely hints** | `[[likely]]`, `__builtin_expect` | Helps predictor training |
+| **Loop unrolling** | Reduce branch frequency | Fewer predictions needed |
+| **Sorted data** | Sort before conditional processing | Improves prediction accuracy |
+
+### Real-World Impact
+
+A tight loop with ~50% branch prediction accuracy (worst case) can see **2-3x slowdown** compared to predictable patterns.
+
+Classic example from [Stack Overflow](https://stackoverflow.com/questions/11227809):
+- **Unsorted array**: ~11 seconds (frequent mispredictions)
+- **Sorted array**: ~1.9 seconds (predictable pattern)
