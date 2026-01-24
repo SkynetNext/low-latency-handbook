@@ -51,3 +51,45 @@ Network stack, virtualization, and high-performance interconnect latency.
 | **UDP (Same DC)** | Round Trip (RTT) | **50-150μs** | **150K-450K** | + Physical NIC & switches |
 | **TCP (Same DC)** | Round Trip (RTT) | **100-200μs** | **300K-600K** | + Protocol overhead |
 
+---
+
+## Aeron Performance Reference
+
+**Source**: [Aeron Google Cloud Performance Testing](https://aeron.io/other/aeron-google-cloud-performance-testing)  
+**Test conditions**: 288-byte messages, 100K msg/s, Google Cloud C3 instances, same-zone deployment.
+
+| Component | Version | RTT (P99) | Cycles @ 3GHz | One-way | Throughput |
+|:----------|:--------|:----------|:--------------|:--------|:-----------|
+| **Aeron Transport** | Open-source | **57μs** | **~171K** | ~28μs | 800K msg/s |
+| **Aeron Transport** | Premium (DPDK) | **18μs** | **~54K** | ~9μs | 4.7M msg/s |
+| **Aeron Cluster** | Open-source | **109μs** | **~327K** | ~55μs | 250K msg/s |
+| **Aeron Cluster** | Premium (DPDK) | **36μs** | **~108K** | ~18μs | 2.2M msg/s |
+
+---
+
+## Receive Path → Ring Buffer Latency Comparison
+
+One-way latency from **packet receive** to **delivery into a ring buffer** (excluding application write/copy). Ordered from highest to lowest latency:
+
+**epoll (10–50μs) > io_uring (3–15μs) > DPDK (0.5–5μs) > FPGA (20–500ns)**
+
+### Comparison by Approach
+
+| Approach | Typical (one-way) | Heavily optimized (one-way) | Pure forward path (one-way) | Main bottlenecks | Notes |
+|:---------|:------------------|:----------------------------|:----------------------------|:-----------------|:------|
+| **epoll** | **10–50μs** | 5–20μs | — | Kernel stack, syscalls, context switches, scheduling jitter | Hard to stay below 5μs; sub-1μs is effectively unattainable |
+| **io_uring** | **3–15μs** | 2–8μs | — | Kernel involvement, memory copy (zero-copy helps) | Fewer syscalls than epoll; sub-1μs remains very difficult |
+| **DPDK** | **0.5–5μs** | 0.3–2μs | 0.5–2μs | PCIe DMA, userspace instruction cost | Kernel bypass, UIO/PMD, huge pages, core pinning; ~1μs is a practical floor in many setups. Data = one-way receive delay |
+| **FPGA** | **20–500ns** | 20–100ns (on-chip) | 100–300ns (PCIe DMA) | Clock cycles, PCIe link | No software stack; highly deterministic. PCIe DMA round-trip ~500–800ns (Gen3×8) |
+
+### Sources & Verification
+
+| Claim | Source |
+|:------|:------|
+| **epoll 10–50μs**, kernel stack overhead, “sub-1μs nearly impossible” | [Kernel Bypass Networking: DPDK, SPDK, io_uring](https://anshadameenza.com/blog/technology/2025-01-15-kernel-bypass-networking-dpdk-spdk-io_uring/); [Cloudflare: How to receive a million packets](https://blog.cloudflare.com/how-to-receive-a-million-packets/); [LWN: Improving Linux networking performance](https://lwn.net/Articles/629155/) |
+| **io_uring between kernel and DPDK**, better than epoll | [LiU: DPDK vs io_uring vs Linux network stack](https://liu.diva-portal.org/smash/record.jsf?pid=diva2%3A1789103); [io_uring vs epoll](https://ryanseipp.com/post/iouring-vs-epoll/) |
+| **DPDK sub-μs to low μs**, L3fwd/testpmd latency | [FD.io CSIT DPDK Packet Latency](https://docs.fd.io/csit/master/report/dpdk_performance_tests/packet_latency/); [DPDK perf reports](https://core.dpdk.org/perf-reports/); [Intel NIC performance reports](https://fast.dpdk.org/doc/perf/) |
+| **FPGA on-NIC ns-scale**, 10× lower than CPU | [hXDP (OSDI’20)](https://www.usenix.org/system/files/osdi20-brunella.pdf); [Cisco Nexus FPGA SmartNIC](https://www.cisco.com/c/en/us/products/collateral/interfaces-modules/nexus-smartnic/datasheet-c78-743825.html) |
+| **PCIe Gen3 DMA round-trip** | [PLX: PCIe packet latency](https://www.mindshare.com/files/resources/PLX_PCIe_Packet_Latency_Matters.pdf); vendor/FPGA literature |
+
+> **Note**: Ranges are industry-typical. Actual values depend on NIC, CPU, load, and tuning. “Pure forward path” = minimal processing (e.g. receive → enqueue only).
